@@ -135,12 +135,25 @@ public class KeyboardService extends InputMethodService {
     private void sendFromSite() {
         refreshSendState();
         if (!browserField) return;
-        InputConnection ic = getCurrentInputConnection();
-        if (ic == null) return;
 
-        // Ask the website's focused editor to perform its SEND action.
-        // Never send a hardware Enter key event and never fall back to Enter.
-        // If a site does not expose a SEND action, Android/the site may ignore it.
-        ic.performEditorAction(EditorInfo.IME_ACTION_SEND);
+        InputConnection ic = getCurrentInputConnection();
+        EditorInfo info = getCurrentInputEditorInfo();
+        if (ic == null || info == null) return;
+
+        // Use the web field's declared editor action when it provides one. HTML
+        // inputs commonly expose GO, SEARCH, or DONE rather than SEND. A custom
+        // actionLabel/actionId is honored as well. If the website exposes no
+        // action at all, request SEND as a best effort. Never synthesize Enter.
+        if (info.actionLabel != null && info.actionId != 0) {
+            ic.performEditorAction(info.actionId);
+            return;
+        }
+
+        int action = info.imeOptions & EditorInfo.IME_MASK_ACTION;
+        if (action == EditorInfo.IME_ACTION_UNSPECIFIED ||
+            action == EditorInfo.IME_ACTION_NONE) {
+            action = EditorInfo.IME_ACTION_SEND;
+        }
+        ic.performEditorAction(action);
     }
 }
