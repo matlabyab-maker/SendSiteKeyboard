@@ -118,11 +118,10 @@ public class KeyboardService extends InputMethodService {
         EditorInfo info=getCurrentInputEditorInfo();
         int editorAction = info == null ? EditorInfo.IME_ACTION_UNSPECIFIED
                 : (info.imeOptions & EditorInfo.IME_MASK_ACTION);
-        // Keep Send disabled for common browser navigation fields (Go/Search/Done).
-        boolean messageLikeAction = editorAction == EditorInfo.IME_ACTION_SEND
-                || editorAction == EditorInfo.IME_ACTION_NONE
-                || editorAction == EditorInfo.IME_ACTION_UNSPECIFIED;
-        browserField = info != null && BROWSERS.contains(info.packageName) && messageLikeAction;
+        // Send is available only when the focused field explicitly advertises SEND.
+        // Never treat unspecified/NONE/GO/SEARCH/ENTER as a Send action.
+        boolean explicitSendAction = editorAction == EditorInfo.IME_ACTION_SEND;
+        browserField = info != null && BROWSERS.contains(info.packageName) && explicitSendAction;
         if(sendButton!=null) {
             sendButton.setEnabled(browserField);
             sendButton.setAlpha(browserField ? 1.0f : 0.35f);
@@ -132,17 +131,17 @@ public class KeyboardService extends InputMethodService {
 
     private void sendFromSite() {
         refreshSendState();
-        if(!browserField) return;
-        InputConnection ic=getCurrentInputConnection();
-        if(ic==null) return;
-        EditorInfo info=getCurrentInputEditorInfo();
-        if(info==null) return;
-        // Use the editor's declared action (e.g. Send/Go) rather than inserting a newline.
-        int action=info.imeOptions & EditorInfo.IME_MASK_ACTION;
-        if(action==EditorInfo.IME_ACTION_NONE || action==EditorInfo.IME_ACTION_UNSPECIFIED) {
-            action=EditorInfo.IME_ACTION_SEND;
+        if (!browserField) return;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        EditorInfo info = getCurrentInputEditorInfo();
+        if (info == null) return;
+
+        int action = info.imeOptions & EditorInfo.IME_MASK_ACTION;
+        // Do not synthesize Enter or fall back to another editor action.
+        // Send only invokes the field's explicitly declared IME_ACTION_SEND.
+        if (action == EditorInfo.IME_ACTION_SEND) {
+            ic.performEditorAction(EditorInfo.IME_ACTION_SEND);
         }
-        boolean handled=ic.performEditorAction(action);
-        if(!handled && action!=EditorInfo.IME_ACTION_SEND) ic.performEditorAction(EditorInfo.IME_ACTION_SEND);
     }
 }

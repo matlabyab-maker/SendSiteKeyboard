@@ -1,12 +1,31 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:label="SendSite Keyboard" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <application
+        android:label="SendSite Keyboard"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:label="SendSite Keyboard"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".KeyboardService"
             android:label="SendSite Keyboard"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:exported="true">
-            <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
-            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
         </service>
     </application>
 </manifest>
